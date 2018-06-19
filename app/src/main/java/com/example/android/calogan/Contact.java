@@ -3,10 +3,12 @@ package com.example.android.calogan;
 public class Contact {
     private String mContactName;
     private String mPhoneNumber;
+    private int mCallCount;
 
-    public Contact(String contactName, String phoneNumber) {
+    public Contact(String contactName, String phoneNumber, int callCount) {
         mContactName = contactName;
         mPhoneNumber = phoneNumber;
+        mCallCount = callCount;
     }
 
     public String getContactName() {
@@ -23,5 +25,13 @@ public class Contact {
 
     public void setPhoneNumber(String phoneNumber) {
         mPhoneNumber = phoneNumber;
+    }
+
+    public int getCallCount() {
+        return mCallCount;
+    }
+
+    public void setCallCount(int callCount) {
+        mCallCount = callCount;
     }
 }
