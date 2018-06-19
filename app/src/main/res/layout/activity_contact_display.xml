@@ -7,8 +7,9 @@
     tools:context=".ContactDisplay">
 
     <TextView
+        android:id="@+id/phone_number_value_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/contacts_display_label"/>
+        android:text="@string/contacts_display_label" />
 
 </LinearLayout>
