@@ -3,4 +3,5 @@
 
     <string name="search_hint">Enter phone number to search here!</string>
     <string name="search_label">Search</string>
+    <string name="contacts_display_label">Contacts Display</string>
 </resources>
