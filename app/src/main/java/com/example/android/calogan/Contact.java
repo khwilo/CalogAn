@@ -3,12 +3,12 @@ package com.example.android.calogan;
 public class Contact {
     private String mContactName;
     private String mPhoneNumber;
-    private int mCallCount;
+    private String mCallType;
 
-    public Contact(String contactName, String phoneNumber, int callCount) {
+    public Contact(String contactName, String phoneNumber, String callType) {
         mContactName = contactName;
         mPhoneNumber = phoneNumber;
-        mCallCount = callCount;
+        mCallType = callType;
     }
 
     public String getContactName() {
@@ -27,11 +27,11 @@ public class Contact {
         mPhoneNumber = phoneNumber;
     }
 
-    public int getCallCount() {
-        return mCallCount;
+    public String getCallType() {
+        return mCallType;
     }
 
-    public void setCallCount(int callCount) {
-        mCallCount = callCount;
+    public void setCallType(String callType) {
+        mCallType = callType;
     }
 }
