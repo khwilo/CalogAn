@@ -4,4 +4,8 @@
     <string name="search_hint">Enter phone number to search here!</string>
     <string name="search_label">Search</string>
     <string name="contacts_display_label">Contacts Display</string>
+
+    <string name="outgoing_calls_count_label">Outgoing Call(s)</string>
+    <string name="incoming_calls_count_label">Incoming Calls(s)</string>
+    <string name="missed_calls_count_label">Missed Call(s)</string>
 </resources>
