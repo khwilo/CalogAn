@@ -4,11 +4,13 @@ public class Contact {
     private String mContactName;
     private String mPhoneNumber;
     private String mCallType;
+    private String mCallDate;
 
-    public Contact(String contactName, String phoneNumber, String callType) {
+    public Contact(String contactName, String phoneNumber, String callType, String callDate) {
         mContactName = contactName;
         mPhoneNumber = phoneNumber;
         mCallType = callType;
+        mCallDate = callDate;
     }
 
     public String getContactName() {
@@ -33,5 +35,13 @@ public class Contact {
 
     public void setCallType(String callType) {
         mCallType = callType;
+    }
+
+    public String getCallDate() {
+        return mCallDate;
+    }
+
+    public void setCallDate(String callDate) {
+        mCallDate = callDate;
     }
 }
