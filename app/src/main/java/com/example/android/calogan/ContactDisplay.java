@@ -12,6 +12,9 @@ public class ContactDisplay extends AppCompatActivity {
     private TextView mContactNameTv;
     private TextView mJsonDataViewTv;
 
+    private ArrayList<Contact> mCallLogsArrayList;
+    private String mCallLogsJsonObject;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,13 +23,13 @@ public class ContactDisplay extends AppCompatActivity {
         mContactNameTv = (TextView) findViewById(R.id.contact_name_tv);
         mJsonDataViewTv = (TextView) findViewById(R.id.json_data_view_tv);
 
-        ArrayList<Contact> contactArrayList = QueryCallsUtility.showCallLogs(this);
+        mCallLogsArrayList = QueryCallsUtility.showCallLogs(this);
 
-        String jsonObject = QueryCallsUtility.extractJsonObject(contactArrayList);
+        mCallLogsJsonObject = QueryCallsUtility.extractJsonObject(mCallLogsArrayList);
 
-        Log.d("JSONOBJECT", jsonObject);
+        Log.d("JSONOBJECT", mCallLogsJsonObject);
 
         mContactNameTv.setText("YOUR CALL LOGS!!");
-        mJsonDataViewTv.append(jsonObject);
+        mJsonDataViewTv.append(mCallLogsJsonObject);
     }
 }
