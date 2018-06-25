@@ -72,8 +72,9 @@ public class ContactDisplay extends AppCompatActivity {
         Log.d("JSONOBJECT", mCallLogsJsonObject);
 
 
+        int incomingCallsCount = getCallCount("Incoming", mCompareCallLogArrayList);
 
-        mContactNameTv.setText("YOUR CALL LOGS!!");
+        mContactNameTv.setText(String.valueOf(incomingCallsCount));
         mJsonDataViewTv.append(mCallLogsJsonObject);
         // mJsonDataViewTv.append(String.valueOf(mSecondCallLogArrayList.size()));
         // mJsonDataViewTv.append(String.valueOf(mCompareCallLogArrayList.size()));
@@ -135,5 +136,15 @@ public class ContactDisplay extends AppCompatActivity {
         newContact.addAll(contactSet);
 
         return newContact;
+    }
+
+    private int getCallCount(String callType, ArrayList<Contact> contacts) {
+        int count = 0;
+        for (int i = 0; i < contacts.size(); i++) {
+            if (contacts.get(i).getCallType().equals(callType)) {
+                count++;
+            }
+        }
+        return count;
     }
 }
