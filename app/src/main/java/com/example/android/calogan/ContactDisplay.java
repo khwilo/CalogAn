@@ -1,20 +1,11 @@
 package com.example.android.calogan;
 
-import android.content.Context;
 import android.content.Intent;
-import android.media.MediaScannerConnection;
-import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 public class ContactDisplay extends AppCompatActivity {
 
@@ -42,8 +33,6 @@ public class ContactDisplay extends AppCompatActivity {
     private TextView mSecondIncomingCallsCountTv;
     private TextView mSecondOutgoingCallsCountTv;
     private TextView mSecondMissedCallsCountTv;
-
-    // private TextView mJsonDataViewTv;
 
     private String mCallLogsJsonObject;
 
@@ -78,11 +67,12 @@ public class ContactDisplay extends AppCompatActivity {
         mFirstMissedCallsCountTv = (TextView) findViewById(R.id.my_call_log_missed_call_count);
 
         mSecondContactNameTv = (TextView) findViewById(R.id.contact_name_tv_2);
-        mSecondIncomingCallsCountTv = (TextView) findViewById(R.id.compared_call_log_incoming_calls_count);
-        mSecondOutgoingCallsCountTv = (TextView) findViewById(R.id.compared_call_log_outgoing_calls_count);
-        mSecondMissedCallsCountTv = (TextView) findViewById(R.id.compared_call_log_missed_calls_count);
-
-        // mJsonDataViewTv = (TextView) findViewById(R.id.json_data_view_tv);
+        mSecondIncomingCallsCountTv = (TextView)
+                findViewById(R.id.compared_call_log_incoming_calls_count);
+        mSecondOutgoingCallsCountTv = (TextView)
+                findViewById(R.id.compared_call_log_outgoing_calls_count);
+        mSecondMissedCallsCountTv = (TextView)
+                findViewById(R.id.compared_call_log_missed_calls_count);
 
         Intent intent = getIntent();
         String phoneNumberValue = intent.getExtras().getString("phone_number");
@@ -91,7 +81,7 @@ public class ContactDisplay extends AppCompatActivity {
 
         mCurrentCallLogArrayList = QueryCallsUtility.showCallLogs(this);
 
-        mDeviceId = getUsersPhoneID();
+        mDeviceId = QueryCallsUtility.getUsersPhoneID(getApplicationContext());
 
         // Load the respective call log files
         mCallLog1 = QueryCallsUtility.loadJSONFromAsset(this, CALL_LOG_FILE_NAME_1);
@@ -101,115 +91,33 @@ public class ContactDisplay extends AppCompatActivity {
         mFirstCallLogArrayList = QueryCallsUtility.extractFeaturesFromJson(mCallLog1);
         mSecondCallLogArrayList = QueryCallsUtility.extractFeaturesFromJson(mCallLog2);
 
-        mCompareCallLogArrayList = retrieveSimilarPhoneNumber(
+        mCompareCallLogArrayList = QueryCallsUtility.retrieveSimilarPhoneNumber(
                 phoneNumberValue,
                 mFirstCallLogArrayList,
                 mSecondCallLogArrayList);
 
-        mFilteredCallLogArrayList = filterCallLogByNumber(phoneNumberValue, mFirstCallLogArrayList);
+        mFilteredCallLogArrayList = QueryCallsUtility.filterCallLogByNumber(
+                phoneNumberValue, mFirstCallLogArrayList);
 
         mCallLogsJsonObject = QueryCallsUtility.extractJsonObject(mCurrentCallLogArrayList);
 
-        writeToExternalStorage(this, mCallLogsJsonObject, mDeviceId);
+        QueryCallsUtility.writeToExternalStorage(this,
+                mCallLogsJsonObject, mDeviceId, FILE_NAME);
 
         mFirstContactNameTv.setText(contactName);
         mFirstIncomingCallsCountTv.append(String.valueOf(
-                getCallCount(INCOMING_CALL_LABEL, mFilteredCallLogArrayList)));
+                QueryCallsUtility.getCallCount(INCOMING_CALL_LABEL, mFilteredCallLogArrayList)));
         mFirstOutgoingCallsCountTv.append(String.valueOf(
-                getCallCount(OUTGOING_CALL_LABEL, mFilteredCallLogArrayList)));
+                QueryCallsUtility.getCallCount(OUTGOING_CALL_LABEL, mFilteredCallLogArrayList)));
         mFirstMissedCallsCountTv.append(String.valueOf(
-                getCallCount(MISSED_CALL_LABEL, mFilteredCallLogArrayList)));
+                QueryCallsUtility.getCallCount(MISSED_CALL_LABEL, mFilteredCallLogArrayList)));
 
-        mSecondContactNameTv.setText(contactName);
+        mSecondContactNameTv.setText(mCompareCallLogArrayList.get(0).getContactName());
         mSecondIncomingCallsCountTv.append(String.valueOf(
-                getCallCount(INCOMING_CALL_LABEL, mCompareCallLogArrayList)));
+                QueryCallsUtility.getCallCount(INCOMING_CALL_LABEL, mCompareCallLogArrayList)));
         mSecondOutgoingCallsCountTv.append(String.valueOf(
-                getCallCount(OUTGOING_CALL_LABEL, mCompareCallLogArrayList)));
+                QueryCallsUtility.getCallCount(OUTGOING_CALL_LABEL, mCompareCallLogArrayList)));
         mSecondMissedCallsCountTv.append(String.valueOf(
-                getCallCount(MISSED_CALL_LABEL, mCompareCallLogArrayList)));
-
-        //mJsonDataViewTv.append(mCallLogsJsonObject);
-    }
-
-    private void writeToExternalStorage(Context context, String data, String prefix) {
-        File file = new File(context.getExternalFilesDir(null), prefix + FILE_NAME);
-
-        FileOutputStream outputStream;
-
-        try {
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-
-            outputStream = new FileOutputStream(file, true);
-            outputStream.write(data.getBytes());
-            outputStream.close();
-
-            MediaScannerConnection.scanFile(context,
-                    new String[]{file.toString()},
-                    null,
-                    null);
-
-            Toast.makeText(context, "File written to external storage",
-                    Toast.LENGTH_SHORT).show();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String getUsersPhoneID() {
-        String deviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID);
-        return deviceId;
-    }
-
-    private ArrayList<CallLog> retrieveSimilarPhoneNumber(String phoneNumber,
-                                                          ArrayList<CallLog> firstCallLog,
-                                                          ArrayList<CallLog> secondCallLog) {
-
-        Set<CallLog> callLogSet = new HashSet<CallLog>();
-
-        ArrayList<CallLog> newCallLog = new ArrayList<>();
-
-        for (CallLog initialCallLog : firstCallLog) {
-            for (CallLog compareCallLog : secondCallLog) {
-                if (initialCallLog.getPhoneNumber().equals(phoneNumber) &&
-                        compareCallLog.getPhoneNumber().equals(phoneNumber)) {
-                    newCallLog.add(compareCallLog);
-                }
-            }
-        }
-
-        // Remove the duplicates
-        callLogSet.addAll(newCallLog);
-        newCallLog = new ArrayList<CallLog>();
-        newCallLog.addAll(callLogSet);
-
-        return newCallLog;
-    }
-
-    private ArrayList<CallLog> filterCallLogByNumber(String phoneNumber,
-                                                     ArrayList<CallLog> callLogs) {
-        ArrayList<CallLog> callLogByCallLog = new ArrayList<>();
-
-        for (CallLog callLog : callLogs) {
-            if (callLog.getPhoneNumber().equals(phoneNumber)) {
-                callLogByCallLog.add(callLog);
-            }
-        }
-
-        return callLogByCallLog;
-    }
-
-
-    private int getCallCount(String callType, ArrayList<CallLog> callLogs) {
-        int count = 0;
-        for (int i = 0; i < callLogs.size(); i++) {
-            if (callLogs.get(i).getCallType().equals(callType)) {
-                count++;
-            }
-        }
-        return count;
+                QueryCallsUtility.getCallCount(MISSED_CALL_LABEL, mCompareCallLogArrayList)));
     }
 }

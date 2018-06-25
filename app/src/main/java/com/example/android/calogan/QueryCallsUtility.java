@@ -5,11 +5,14 @@ import android.content.Context;
 import android.content.CursorLoader;
 import android.content.res.AssetManager;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.provider.CallLog.Calls;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -17,11 +20,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 public class QueryCallsUtility {
 
@@ -36,7 +43,8 @@ public class QueryCallsUtility {
 
     // Make the constructor private because
     // the intention is not to create new objects from this class.
-    private QueryCallsUtility() {}
+    private QueryCallsUtility() {
+    }
 
     public static ArrayList<CallLog> showCallLogs(Context context) {
 
@@ -130,6 +138,40 @@ public class QueryCallsUtility {
         return dateFormat.format(dateObject);
     }
 
+    public static void writeToExternalStorage(Context context,
+                                              String data, String prefix, String fileName) {
+        File file = new File(context.getExternalFilesDir(null), prefix + fileName);
+
+        FileOutputStream outputStream;
+
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            outputStream = new FileOutputStream(file, true);
+            outputStream.write(data.getBytes());
+            outputStream.close();
+
+            MediaScannerConnection.scanFile(context,
+                    new String[]{file.toString()},
+                    null,
+                    null);
+
+            Toast.makeText(context, "File written to external storage",
+                    Toast.LENGTH_SHORT).show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getUsersPhoneID(Context context) {
+        String deviceId = Settings.Secure.getString(context.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
+        return deviceId;
+    }
+
     // Extract a call log JSON object from the callLogs ArrayList.
     public static String extractJsonObject(ArrayList<CallLog> callLogs) {
         Gson gson = new Gson();
@@ -183,6 +225,54 @@ public class QueryCallsUtility {
         }
 
         return callLogs;
+    }
+
+    public static ArrayList<CallLog> retrieveSimilarPhoneNumber(String phoneNumber,
+                                                                ArrayList<CallLog> firstCallLog,
+                                                                ArrayList<CallLog> secondCallLog) {
+
+        Set<CallLog> callLogSet = new HashSet<CallLog>();
+
+        ArrayList<CallLog> newCallLog = new ArrayList<>();
+
+        for (CallLog initialCallLog : firstCallLog) {
+            for (CallLog compareCallLog : secondCallLog) {
+                if (initialCallLog.getPhoneNumber().equals(phoneNumber) &&
+                        compareCallLog.getPhoneNumber().equals(phoneNumber)) {
+                    newCallLog.add(compareCallLog);
+                }
+            }
+        }
+
+        // Remove the duplicates
+        callLogSet.addAll(newCallLog);
+        newCallLog = new ArrayList<CallLog>();
+        newCallLog.addAll(callLogSet);
+
+        return newCallLog;
+    }
+
+    public static ArrayList<CallLog> filterCallLogByNumber(String phoneNumber,
+                                                           ArrayList<CallLog> callLogs) {
+        ArrayList<CallLog> callLogByCallLog = new ArrayList<>();
+
+        for (CallLog callLog : callLogs) {
+            if (callLog.getPhoneNumber().equals(phoneNumber)) {
+                callLogByCallLog.add(callLog);
+            }
+        }
+
+        return callLogByCallLog;
+    }
+
+    public static int getCallCount(String callType, ArrayList<CallLog> callLogs) {
+        int count = 0;
+        for (int i = 0; i < callLogs.size(); i++) {
+            if (callLogs.get(i).getCallType().equals(callType)) {
+                count++;
+            }
+        }
+        return count;
     }
 }
 
