@@ -3,13 +3,24 @@ package com.example.android.calogan;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CallLog.Calls;
 import android.provider.ContactsContract;
+import android.text.TextUtils;
+import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -125,6 +136,55 @@ public class QueryCallsUtility {
     public static String extractJsonObject(ArrayList<Contact> contacts) {
         Gson gson = new Gson();
         return gson.toJson(contacts);
+    }
+
+    // Read a JSON file from the assets folder.
+    public static String loadJSONFromAsset(Context context, String fileName) {
+        String json = null;
+
+        try {
+            AssetManager assetManager = context.getAssets();
+            InputStream inputStream = assetManager.open(fileName);
+            int size = inputStream.available();
+            byte[] buffer = new byte[size];
+            inputStream.read(buffer);
+            inputStream.close();
+            json = new String(buffer, "UTF-8");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return json;
+    }
+
+    // Parse the JSON file.
+    // The String callLogJson is gotten from the loadJSONFromAsset method.
+    public static ArrayList<Contact> extractFeaturesFromJson(String callLogJson) {
+
+        ArrayList<Contact> contacts = new ArrayList<>();
+
+        if (TextUtils.isEmpty(callLogJson)) {
+            return null;
+        }
+
+        try {
+            JSONArray callLogJsonArray = new JSONArray(callLogJson);
+            for (int i = 0; i < callLogJsonArray.length(); i++) {
+                JSONObject callLogJsonObject = callLogJsonArray.getJSONObject(i);
+                String callDate = callLogJsonObject.getString("mCallDate");
+                String callType = callLogJsonObject.getString("mCallType");
+                String contactName = callLogJsonObject.getString("mContactName");
+                String phoneNumber = callLogJsonObject.getString("mPhoneNumber");
+
+                Contact contact = new Contact(contactName, phoneNumber, callType, callDate);
+
+                contacts.add(contact);
+            }
+        } catch (JSONException e) {
+            Log.d("JSON_OBJECT", "Problem parsing the call logs JSON results", e);
+        }
+
+        return contacts;
     }
 }
 
