@@ -12,7 +12,6 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -20,7 +19,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,10 +38,10 @@ public class QueryCallsUtility {
     // the intention is not to create new objects from this class.
     private QueryCallsUtility() {}
 
-    public static ArrayList<Contact> showCallLogs(Context context) {
+    public static ArrayList<CallLog> showCallLogs(Context context) {
 
         // Create an ArrayList to hold the call logs details.
-        ArrayList<Contact> contactsList = new ArrayList<>();
+        ArrayList<CallLog> callLogArrayList = new ArrayList<>();
 
         // Fetch the Uri of the call logs
         Uri callLogUri = Calls.CONTENT_URI;
@@ -79,26 +77,26 @@ public class QueryCallsUtility {
             String callType = "";
             if (Integer.parseInt(callTypeValue) == INCOMING_CALL) {
                 callType = "Incoming";
-                Contact incomingCall = new Contact(contactName, phoneNumberValue,
+                CallLog incomingCall = new CallLog(contactName, phoneNumberValue,
                         callType, formattedDate);
-                contactsList.add(incomingCall);
+                callLogArrayList.add(incomingCall);
             } else if (Integer.parseInt(callTypeValue) == OUTGOING_CALL) {
                 callType = "Outgoing";
-                Contact outgoingCall = new Contact(contactName, phoneNumberValue,
+                CallLog outgoingCall = new CallLog(contactName, phoneNumberValue,
                         callType, formattedDate);
-                contactsList.add(outgoingCall);
+                callLogArrayList.add(outgoingCall);
             } else if (Integer.parseInt(callTypeValue) == MISSED_CALL) {
                 callType = "Missed";
-                Contact missedCall = new Contact(contactName, phoneNumberValue,
+                CallLog missedCall = new CallLog(contactName, phoneNumberValue,
                         callType, formattedDate);
-                contactsList.add(missedCall);
+                callLogArrayList.add(missedCall);
             }
 
         }
 
         mCursor.close();
 
-        return contactsList;
+        return callLogArrayList;
     }
 
     // Retrieve the contact name from the phone address book.
@@ -132,10 +130,10 @@ public class QueryCallsUtility {
         return dateFormat.format(dateObject);
     }
 
-    // Extract a call log JSON object from the contacts ArrayList.
-    public static String extractJsonObject(ArrayList<Contact> contacts) {
+    // Extract a call log JSON object from the callLogs ArrayList.
+    public static String extractJsonObject(ArrayList<CallLog> callLogs) {
         Gson gson = new Gson();
-        return gson.toJson(contacts);
+        return gson.toJson(callLogs);
     }
 
     // Read a JSON file from the assets folder.
@@ -159,9 +157,9 @@ public class QueryCallsUtility {
 
     // Parse the JSON file.
     // The String callLogJson is gotten from the loadJSONFromAsset method.
-    public static ArrayList<Contact> extractFeaturesFromJson(String callLogJson) {
+    public static ArrayList<CallLog> extractFeaturesFromJson(String callLogJson) {
 
-        ArrayList<Contact> contacts = new ArrayList<>();
+        ArrayList<CallLog> callLogs = new ArrayList<>();
 
         if (TextUtils.isEmpty(callLogJson)) {
             return null;
@@ -176,15 +174,15 @@ public class QueryCallsUtility {
                 String contactName = callLogJsonObject.getString("mContactName");
                 String phoneNumber = callLogJsonObject.getString("mPhoneNumber");
 
-                Contact contact = new Contact(contactName, phoneNumber, callType, callDate);
+                CallLog callLog = new CallLog(contactName, phoneNumber, callType, callDate);
 
-                contacts.add(contact);
+                callLogs.add(callLog);
             }
         } catch (JSONException e) {
             Log.d("JSON_OBJECT", "Problem parsing the call logs JSON results", e);
         }
 
-        return contacts;
+        return callLogs;
     }
 }
 
