@@ -1,6 +1,7 @@
 package com.example.android.calogan;
 
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaScannerConnection;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
@@ -19,16 +20,23 @@ import java.util.Set;
 public class ContactDisplay extends AppCompatActivity {
 
     private static final String TAG = "CONTACT_DISPLAY";
+
+    // The file name to be stored in disk.
     private static final String FILE_NAME = "_call_log.json";
 
+    // The retrieved file names from the specific devices.
     private static final String CALL_LOG_FILE_NAME_1 = "289ce0d0d3ae576d_call_log.json";
     private static final String CALL_LOG_FILE_NAME_2 = "1aaa3b51b999ef6d_call_log.json";
+
+    // Labels for each call type.
+    private static final String INCOMING_CALL_LABEL = "Incoming";
+    private static final String OUTGOING_CALL_LABEL = "Outgoing";
+    private static final String MISSED_CALL_LABEL = "Missed";
 
 
     private TextView mContactNameTv;
     private TextView mJsonDataViewTv;
 
-    private ArrayList<Contact> mCallLogsArrayList;
     private String mCallLogsJsonObject;
 
     private String mDeviceId;
@@ -36,10 +44,14 @@ public class ContactDisplay extends AppCompatActivity {
     private String mCallLog1;
     private String mCallLog2;
 
-    private ArrayList<Contact> mFirstCallLogArrayList;
-    private ArrayList<Contact> mSecondCallLogArrayList;
+    // ArrayList to store the call logs of the first device.
+    private ArrayList<CallLog> mFirstCallLogArrayList;
 
-    private ArrayList<Contact> mCompareCallLogArrayList;
+    // ArrayList to store the call logs of the second device.
+    private ArrayList<CallLog> mSecondCallLogArrayList;
+
+    // ArrayList to store the comparison between the first and the second call logs.
+    private ArrayList<CallLog> mCompareCallLogArrayList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,10 +61,13 @@ public class ContactDisplay extends AppCompatActivity {
         mContactNameTv = (TextView) findViewById(R.id.contact_name_tv);
         mJsonDataViewTv = (TextView) findViewById(R.id.json_data_view_tv);
 
-        mDeviceId = getUsersPhoneID();
-        Log.d(TAG, mDeviceId);
+        Intent intent = getIntent();
+        String phoneNumberValue = intent.getExtras().getString("phone_number");
 
-        mCallLogsArrayList = QueryCallsUtility.showCallLogs(this);
+        String contactName = QueryCallsUtility.getContactName(getBaseContext(), phoneNumberValue);
+
+
+        mDeviceId = getUsersPhoneID();
 
         // Load the respective call log files
         mCallLog1 = QueryCallsUtility.loadJSONFromAsset(this, CALL_LOG_FILE_NAME_1);
@@ -62,22 +77,23 @@ public class ContactDisplay extends AppCompatActivity {
         mFirstCallLogArrayList = QueryCallsUtility.extractFeaturesFromJson(mCallLog1);
         mSecondCallLogArrayList = QueryCallsUtility.extractFeaturesFromJson(mCallLog2);
 
-        mCompareCallLogArrayList = findNumber("0722273085",
+        mCompareCallLogArrayList = retrieveSimilarPhoneNumber("0722273085",
                 mFirstCallLogArrayList,
                 mSecondCallLogArrayList);
 
-        mCallLogsJsonObject = QueryCallsUtility.extractJsonObject(mCompareCallLogArrayList);
+
+        int incomingCallsCount = getCallCount(INCOMING_CALL_LABEL, mCompareCallLogArrayList);
+        ArrayList<CallLog> mCallLogByCallLog = filterCallLogByNumber(
+                phoneNumberValue, mSecondCallLogArrayList);
+
+
+        // mCallLogsJsonObject = QueryCallsUtility.extractJsonObject(mCompareCallLogArrayList);
+        mCallLogsJsonObject = QueryCallsUtility.extractJsonObject(mCallLogByCallLog);
+
         writeToExternalStorage(this, mCallLogsJsonObject, mDeviceId);
 
-        Log.d("JSONOBJECT", mCallLogsJsonObject);
-
-
-        int incomingCallsCount = getCallCount("Incoming", mCompareCallLogArrayList);
-
-        mContactNameTv.setText(String.valueOf(incomingCallsCount));
+        mContactNameTv.setText(contactName);
         mJsonDataViewTv.append(mCallLogsJsonObject);
-        // mJsonDataViewTv.append(String.valueOf(mSecondCallLogArrayList.size()));
-        // mJsonDataViewTv.append(String.valueOf(mCompareCallLogArrayList.size()));
     }
 
     private void writeToExternalStorage(Context context, String data, String prefix) {
@@ -113,35 +129,49 @@ public class ContactDisplay extends AppCompatActivity {
         return deviceId;
     }
 
-    private ArrayList<Contact> findNumber(String phoneNumber,
-                                          ArrayList<Contact> firstContact,
-                                          ArrayList<Contact> secondContact) {
+    private ArrayList<CallLog> retrieveSimilarPhoneNumber(String phoneNumber,
+                                                          ArrayList<CallLog> firstCallLog,
+                                                          ArrayList<CallLog> secondCallLog) {
 
-        Set<Contact> contactSet = new HashSet<Contact>();
+        Set<CallLog> callLogSet = new HashSet<CallLog>();
 
-        ArrayList<Contact> newContact = new ArrayList<>();
+        ArrayList<CallLog> newCallLog = new ArrayList<>();
 
-        for (Contact initialContact : firstContact) {
-            for (Contact compareContact : secondContact) {
-                if (initialContact.getPhoneNumber().equals(phoneNumber) &&
-                        compareContact.getPhoneNumber().equals(phoneNumber)) {
-                    newContact.add(compareContact);
+        for (CallLog initialCallLog : firstCallLog) {
+            for (CallLog compareCallLog : secondCallLog) {
+                if (initialCallLog.getPhoneNumber().equals(phoneNumber) &&
+                        compareCallLog.getPhoneNumber().equals(phoneNumber)) {
+                    newCallLog.add(compareCallLog);
                 }
             }
         }
 
         // Remove the duplicates
-        contactSet.addAll(newContact);
-        newContact = new ArrayList<Contact>();
-        newContact.addAll(contactSet);
+        callLogSet.addAll(newCallLog);
+        newCallLog = new ArrayList<CallLog>();
+        newCallLog.addAll(callLogSet);
 
-        return newContact;
+        return newCallLog;
     }
 
-    private int getCallCount(String callType, ArrayList<Contact> contacts) {
+    private ArrayList<CallLog> filterCallLogByNumber(String phoneNumber,
+                                                     ArrayList<CallLog> callLogs) {
+        ArrayList<CallLog> callLogByCallLog = new ArrayList<>();
+
+        for (CallLog callLog : callLogs) {
+            if (callLog.getPhoneNumber().equals(phoneNumber)) {
+                callLogByCallLog.add(callLog);
+            }
+        }
+
+        return callLogByCallLog;
+    }
+
+
+    private int getCallCount(String callType, ArrayList<CallLog> callLogs) {
         int count = 0;
-        for (int i = 0; i < contacts.size(); i++) {
-            if (contacts.get(i).getCallType().equals(callType)) {
+        for (int i = 0; i < callLogs.size(); i++) {
+            if (callLogs.get(i).getCallType().equals(callType)) {
                 count++;
             }
         }
