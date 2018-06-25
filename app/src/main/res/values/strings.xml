@@ -8,4 +8,7 @@
     <string name="outgoing_calls_count_label">Outgoing Call(s)</string>
     <string name="incoming_calls_count_label">Incoming Calls(s)</string>
     <string name="missed_calls_count_label">Missed Call(s)</string>
+
+    <string name="my_call_log_label">MY CALL LOG</string>
+    <string name="compared_call_log_label">COMPARED CALL LOG</string>
 </resources>
